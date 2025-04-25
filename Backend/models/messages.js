@@ -1,17 +1,24 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
-const messageSchema = mongoose.Schema({
-    author: { type: mongoose.Schema.Types.ObjectId, ref:'User', required: true  }, // Référence à un User
-    content : { type: String, required: true }, // Contenu du message
-    latitude : { type: Number, required: true }, // Coordonnées géographiques
-    longitude : { type: Number, required: true }, // Coordonnées géographiques
-    // category : { type: String, required: true }, // Catégorie (poésie, encouragement, amour, etc.)
-    createdAt : { type: Date, default: Date.now }, // Date de création
-    expiresAt : { type: Date } // Date d'expiration (optionnelle)
-})
+const messageSchema = new mongoose.Schema({
+    content: { type: String, required: true },
+    font: String,
+    paper: String,
+    encre: String,
+    location: {
+        type: {
+            type: String,
+            enum: ['Point'],
+            required: true,
+            default: 'Point',
+        },
+        coordinates: {
+            type: [Number],
+            required: true,
+        },
+    },
+});
 
-// TTL (Time-to-live) activé pour suppression auto des messages dans MongoDB
-messageSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); 
+messageSchema.index({ location: '2dsphere' });
 
-const Message = mongoose.model('Message', messageSchema);
-module.exports = Message;
+export default mongoose.model('Message', messageSchema);
