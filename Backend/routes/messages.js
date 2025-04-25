@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Message = require ('../models/messages');
+const Message = require('../models/messages');
 const User = require('../models/users');
 // const {checkToken} = require('../modules/checkToken');
 
@@ -8,7 +8,7 @@ const User = require('../models/users');
 router.post('/', async (req, res) => {
     const { content, latitude, longitude, font, paper, encre } = req.body;
     // Vérifie que le contenu, la latitude et la longitude sont présents
-    if(!content || !latitude || !longitude) {
+    if (!content || !latitude || !longitude) {
         return res.status(400).json({ result: false, message: 'Champs manquants ou vides' });
     }
     try {
@@ -23,42 +23,50 @@ router.post('/', async (req, res) => {
             longitude,
             font,
             paper,
-            encre
+            encre,
+            location: {
+                type: 'Point',
+                coordinates : [Number(longitude), Number(latitude)] // Ordre : [longitude, latitude]
+            }
         })
 
         const savedMessage = await newMessage.save();
-        return res.status(201).json({ result:true, message: 'Message créé', data: savedMessage });
+        return res.status(201).json({ result: true, message: 'Message créé', data: savedMessage });
 
-    } catch(error) {
-        console.log(error);
-        return res.status(500).json({ result: false, error: 'Erreur serveur' });
-    }
-});
-
-
-// -- GET /messages : Récupérer les messages proches (via lat/lng en query) -- //
-router.get('/', async(req, res) => {
-    const {latitude, longitude, radius=0.01 } = req.query; 
-
-    if(!latitude || !longitude) {
-        return res.status(400).json({ result: false, message: 'Latitude et longitude requises'})
-    }
-        try {
-        // Récupère les messages proches de l'utilisateur
-        const messages = await Message.find({
-            latitude: { $gte: Number(latitude) - radius, $lte: Number(latitude) + radius },
-            longitude: { $gte: Number(longitude) - radius, $lte: Number(longitude) + radius },
-          }).populate('author', 'username');
-
-          res.status(200).json({ result: true, message: 'Messages récupérés', data: messages });
     } catch (error) {
         console.log(error);
         return res.status(500).json({ result: false, error: 'Erreur serveur' });
-
     }
 });
 
-// DELETE	/messages/:id	Supprimer un message (par son auteur uniquement)
-// GET    /messages/:id	Récupérer un message 
+// Test de la route GET : http://localhost:3000/messages?latitude=48.8566&longitude=2.3522&distance=50
+// -- GET /messages : Récupérer les messages proches (via lat/lng en query) -- //
+router.get('/', async (req, res) => {
+    const { latitude, longitude, distance = 50 } = req.query; // distance en mètres
+
+    if (!latitude || !longitude) {
+        return res.status(400).json({ result: false, message: 'Latitude et longitude requises.' });
+    }
+
+    try {
+        const messages = await Message.find({
+            location: {
+                $near: {
+                    $geometry: {
+                        type: "Point",
+                        coordinates: [Number(longitude), Number(latitude)] // Attention à l'ordre
+                    },
+                    $maxDistance: Number(distance) // Rayon en mètres
+                }
+            }
+        });
+
+        res.status(200).json({ result: true, message: 'Messages récupérés', data: messages });
+    } catch (error) {
+        console.error('Erreur GET /messages :', error);
+        res.status(500).json({ result: false, message: 'Erreur serveur' });
+    }
+});
+
 
 module.exports = router;

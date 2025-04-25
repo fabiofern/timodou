@@ -1,20 +1,32 @@
 const mongoose = require('mongoose');
 
 const messageSchema = mongoose.Schema({
-    // author: { type: mongoose.Schema.Types.ObjectId, ref:'User', required: true  }, // Référence à un User
-    content : { type: String, required: true }, // Contenu du message
-    latitude : { type: Number, required: true }, // Coordonnées géographiques
-    longitude : { type: Number, required: true }, // Coordonnées géographiques
-    font : String,
-    paper : String,
-    encre : String,
-    // category : { type: String, required: true }, // Catégorie (poésie, encouragement, amour, etc.)
-    // createdAt : { type: Date, default: Date.now }, // Date de création
-    // expiresAt : { type: Date } // Date d'expiration (optionnelle)
+    content: { type: String, required: true }, // Contenu du message
+    latitude: { type: Number, required: true }, // Coordonnées géographiques
+    longitude: { type: Number, required: true }, // Coordonnées géographiques
+    font: String,
+    paper: String,
+    encre: String,
+    location: {
+        type: { type: String, enum: ['Point'], required: true, default: 'Point' }, // Type de géométrie (Point)
+        coordinates: { type: [Number], required: true }
+    },
 })
 
-// TTL (Time-to-live) activé pour suppression auto des messages dans MongoDB
-// messageSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); 
+// créer un index géospatial pour la localisation
+messageSchema.index({ location: '2dsphere' });
+
+// Avant de sauvegarder, on définit automatiquement les coordonnées de la localisation
+messageSchema.pre('save', function (next) {
+    if (this.latitude && this.longitude) {
+        this.location = {
+            type: 'Point',
+            coordinates: [this.longitude, this.latitude] // Ordre : [longitude, latitude]
+        };
+    }
+    next();
+});
+
 
 const Message = mongoose.model('Message', messageSchema);
 module.exports = Message;
