@@ -1,9 +1,3 @@
-import { registerRootComponent } from 'expo';
-import App from './App';
-
-registerRootComponent(App);
-
-
 import React, { useEffect, useState } from 'react';
 import {
     View,
@@ -54,66 +48,22 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
     }
 });
 
-export default function Index({ navigation }) {
 
+
+export default function SendNote({ navigation }) {
     const [fontsLoaded] = useFonts({
         DancingScript_400Regular,
         Poppins_400Regular,
         GreatVibes_400Regular,
     });
-    if (!fontsLoaded) {
-        return <AppLoading />;
-    }
+    // if (!fontsLoaded) return <AppLoading />;
 
     const [message, setMessage] = useState('');
     const [font, setFont] = useState('serif');
     const [paper, setPaper] = useState('white');
     const [encre, setEncre] = useState('black');
-    const [modalVisible, setModalVisible] = useState(false);
-    const [messageNearby, setMessageNearby] = useState(null);
 
 
-    useEffect(() => {
-        const startLocationTracking = async () => {
-            const { status } = await Location.requestForegroundPermissionsAsync();
-            const { status: bgStatus } = await Location.requestBackgroundPermissionsAsync();
-
-            if (status !== 'granted' || bgStatus !== 'granted') {
-                alert('Permission géoloc refusée 📍');
-                return;
-            }
-
-            const alreadyStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
-            if (!alreadyStarted) {
-                await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-                    accuracy: Location.Accuracy.Balanced,
-                    timeInterval: 15 * 60 * 1000, // 15 minutes
-                    distanceInterval: 0,
-                    showsBackgroundLocationIndicator: false,
-                    foregroundService: {
-                        notificationTitle: "Nalu veille pour toi",
-                        notificationBody: "Vérifie les alentours...",
-                    },
-                });
-                console.log('🛰️ Tracking background activé');
-            }
-        };
-
-        startLocationTracking();
-    }, []);
-
-    useEffect(() => {
-        const checkStoredMessage = async () => {
-            const saved = await AsyncStorage.getItem('message_to_display');
-            if (saved) {
-                setMessageNearby(JSON.parse(saved));
-                setModalVisible(true);
-                await AsyncStorage.removeItem('message_to_display');
-            }
-        };
-
-        checkStoredMessage();
-    }, []);
 
     const envoyerMessage = async () => {
         try {
@@ -129,9 +79,7 @@ export default function Index({ navigation }) {
 
             const response = await fetch('http://ton-backend-api.com/messages', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(messageData),
             });
 
@@ -158,7 +106,7 @@ export default function Index({ navigation }) {
             <SafeAreaView style={{ flex: 1, backgroundColor: '#f2dcc3' }}>
                 <View style={styles.container}>
                     <View style={styles.header}>
-                        <Text style={styles.title}>timodou</Text>
+                        <Text style={styles.title}>Timodou</Text>
                     </View>
 
                     <View style={styles.box}>
@@ -186,7 +134,7 @@ export default function Index({ navigation }) {
                     </View>
 
                     <View style={styles.fontbuttoncontainer}>
-                        <Text style={styles.label}>Font   </Text>
+                        <Text style={styles.label}>Font  </Text>
                         {[
                             { name: 'DancingScript_400Regular' },
                             { name: 'Poppins_400Regular' },
@@ -205,9 +153,6 @@ export default function Index({ navigation }) {
                         <Text style={styles.sendButtonText} onPress={() => navigation.navigate('NoteBox')}>Notes founded</Text>
                     </TouchableOpacity>
                 </View>
-
-
-
             </SafeAreaView>
         </TouchableWithoutFeedback>
     );
@@ -326,26 +271,5 @@ const styles = StyleSheet.create({
     sendButtonText: {
         color: '#333',
         fontSize: 25,
-    },
-    overlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        height: '100%',
-        width: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 10,
-    },
-    modal: {
-        padding: 20,
-        borderRadius: 20,
-        width: '85%',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        backgroundColor: '#fff',
     },
 });
