@@ -2,32 +2,28 @@ const express = require('express');
 const router = express.Router();
 const Message = require('../models/messages');
 const User = require('../models/users');
-const { checkToken } = require('../modules/checkToken');
+// const {checkToken} = require('../modules/checkToken');
 
 // -- POST /messages: Créer un message géolocalisé -- //
-router.post('/', checkToken, async (req, res) => {
-    const { content, latitude, longitude } = req.body;
+router.post('/', async (req, res) => {
+    const { content, latitude, longitude, font, paper, encre } = req.body;
     // Vérifie que le contenu, la latitude et la longitude sont présents
     if (!content || !latitude || !longitude) {
         return res.status(400).json({ result: false, message: 'Champs manquants ou vides' });
     }
     try {
-
+        // Crée un nouveau message
+        // const expiresAt = new Date();
+        // expiresAt.setHours(expiresAt.getHours() + 24); // Définit l'expiration à 24 heures après la création
+        // expiresAt.setDate(expiresAt.getDate() + 7); // OU Définit l'expiration à 7 jours après la création
         const newMessage = new Message({
-            author: req.user.id, // ID de l'utilisateur connecté
+            // author: req.user.id, // ID de l'utilisateur connecté
             content,
             latitude,
             longitude,
-            expiresAt
-
-            // ce au on doit absolument retropouver pour que j affiche le message avec les bonnes coouluers font etc ..
-
-            // message: String,
-            // latitude: Number,
-            // longitude: Number,
-            // font: String,
-            // paper: String,
-            // encre: String,
+            font,
+            paper,
+            encre
         })
 
         const savedMessage = await newMessage.save();
@@ -87,8 +83,9 @@ router.post('/nearby', async (req, res) => {
 
 
 // -- GET /messages : Récupérer les messages proches (via lat/lng en query) -- //
-router.get('/', checkToken, async (req, res) => {
+router.get('/', async (req, res) => {
     const { latitude, longitude, radius = 0.01 } = req.query;
+
     if (!latitude || !longitude) {
         return res.status(400).json({ result: false, message: 'Latitude et longitude requises' })
     }
