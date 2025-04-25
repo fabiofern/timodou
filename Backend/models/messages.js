@@ -5,10 +5,13 @@ const messageSchema = mongoose.Schema({
     content : { type: String, required: true }, // Contenu du message
     latitude : { type: Number, required: true }, // Coordonnées géographiques
     longitude : { type: Number, required: true }, // Coordonnées géographiques
-    category : { type: String, required: true }, // Catégorie (poésie, encouragement, amour, etc.)
+    // category : { type: String, required: true }, // Catégorie (poésie, encouragement, amour, etc.)
     createdAt : { type: Date, default: Date.now }, // Date de création
     expiresAt : { type: Date } // Date d'expiration (optionnelle)
 })
 
-const Message = mongoose.model('messages', messageSchema);
+// TTL (Time-to-live) activé pour suppression auto des messages dans MongoDB
+messageSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); 
+
+const Message = mongoose.model('Message', messageSchema);
 module.exports = Message;

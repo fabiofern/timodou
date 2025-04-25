@@ -141,7 +141,7 @@ router.get('/profile', checkToken, async (req, res) => {
         username: user.username,
         email: user.email,
         profilePicture: user.profilePicture,
-        createdAt: user.createdAt
+        // createdAt: user.createdAt
       }
     });
 
