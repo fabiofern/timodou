@@ -1,24 +1,45 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Image } from 'react-native';
-import { useEffect } from 'react';
 import * as Location from 'expo-location';
-import useLocationPermission from './useLocationPermission'
-
-
+import { useFonts } from 'expo-font';
+import { DancingScript_400Regular } from '@expo-google-fonts/dancing-script';
+import { Poppins_400Regular } from '@expo-google-fonts/poppins';
+import { GreatVibes_400Regular } from '@expo-google-fonts/great-vibes';
+import AppLoading from 'expo-app-loading';
 
 export default function Accueil({ navigation }) {
+    const [fontsLoaded] = useFonts({
+        DancingScript_400Regular,
+        Poppins_400Regular,
+        GreatVibes_400Regular,
+    });
 
-    useLocationPermission();
+    // 💬 Demande la permission une fois que les fonts sont prêtes
+    useEffect(() => {
+        if (fontsLoaded) {
+            (async () => {
+                const { status: fgStatus } = await Location.requestForegroundPermissionsAsync();
+                const { status: bgStatus } = await Location.requestBackgroundPermissionsAsync();
 
+                if (fgStatus === 'granted' && bgStatus === 'granted') {
+                    console.log('✅ Permissions géoloc acceptées');
+                } else if (fgStatus === 'denied' || bgStatus === 'denied') {
+                    console.log('⚠️ Permissions refusées');
+                    alert("Tu as refusé la géolocalisation. Pour l'activer, va dans les Réglages de ton téléphone 📍");
+                } else {
+                    console.log('⏳ Permissions en attente...');
+                }
+            })();
+        }
+    }, [fontsLoaded]);
 
+    if (!fontsLoaded) return <AppLoading />;
 
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.title}>Timodou</Text>
             <Text style={styles.quote}>An anonymous way to tell the world... that life is beautiful.</Text>
             <Image source={require('./assets/Image.png')} style={styles.image} />
-
-
             <Text style={styles.subtitle}>Write for those who'll pass by, discover what others have sown.</Text>
 
             <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('SendNote')}>
@@ -44,7 +65,6 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 90,
         fontFamily: 'DancingScript_400Regular',
-
         color: '#333',
     },
     quote: {

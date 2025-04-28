@@ -6,35 +6,79 @@ import { DancingScript_400Regular } from '@expo-google-fonts/dancing-script';
 import { Poppins_400Regular } from '@expo-google-fonts/poppins';
 import { GreatVibes_400Regular } from '@expo-google-fonts/great-vibes';
 import AppLoading from 'expo-app-loading';
+// import { set } from 'mongoose';
+import * as Location from 'expo-location';
+
 
 export default function NoteBox({ navigation }) {
-    const [notes, setNotes] = useState([]);
-
     const [fontsLoaded] = useFonts({
         DancingScript_400Regular,
         Poppins_400Regular,
         GreatVibes_400Regular,
     });
+    if (!fontsLoaded) return <AppLoading />;
+
+    const [notes, setNotes] = useState([]);
+
 
     useEffect(() => {
-        const loadNotes = async () => {
-            const saved = await AsyncStorage.getItem('stored_notes');
-            if (saved) {
-                setNotes(JSON.parse(saved));
+        const fetchAndStoreNearbyNotes = async () => {
+            try {
+                const location = await Location.getCurrentPositionAsync({});
+                const response = await fetch('http://192.168.2.16:3000/messages/nearby', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        latitude: location.coords.latitude,
+                        longitude: location.coords.longitude,
+                    }),
+                });
+
+                const result = await response.json();
+
+                if (result.result) {
+                    console.log('📬 Nearby notes found:', result.data);
+                    setNotes(result.data);
+                    await AsyncStorage.setItem('stored_notes', JSON.stringify(result.data)); // On sauvegarde ce qu'on trouve
+                } else {
+                    console.error('Erreur lors de la récupération des messages :', result.message || result.error);
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
             }
         };
 
-        loadNotes();
+        fetchAndStoreNearbyNotes();
     }, []);
 
-    const removeNote = async (index) => {
-        const updated = [...notes];
-        updated.splice(index, 1);
-        setNotes(updated);
-        await AsyncStorage.setItem('stored_notes', JSON.stringify(updated));
+
+    // const removeNote = async (index) => {
+    //     const updated = [...notes];
+    //     updated.splice(index, 1);
+    //     setNotes(updated);
+    //     await AsyncStorage.setItem('stored_notes', JSON.stringify(updated));
+    // };
+
+    const removeNote = async (id) => {
+        try {
+            const response = await fetch(`http://192.168.2.16:3000/messages/${id}`, {
+                method: 'DELETE',
+            });
+
+            const result = await response.json();
+
+            if (result.result) {
+                // Mise à jour locale
+                setNotes((prevNotes) => prevNotes.filter((note) => note._id !== id));
+                await AsyncStorage.setItem('stored_notes', JSON.stringify(notes.filter((note) => note._id !== id)));
+            } else {
+                console.error('Erreur suppression :', result.message || result.error);
+            }
+        } catch (error) {
+            console.error('Erreur réseau suppression:', error);
+        }
     };
 
-    if (!fontsLoaded) return <AppLoading />;
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#f2dcc3' }}>
@@ -55,7 +99,7 @@ export default function NoteBox({ navigation }) {
                         }}>
                             {note.content}
                         </Text>
-                        <TouchableOpacity onPress={() => removeNote(index)}>
+                        <TouchableOpacity onPress={() => removeNote(note._id)}>
                             <Text style={styles.deleteText}>🗑️ Supprimer</Text>
                         </TouchableOpacity>
                     </View>

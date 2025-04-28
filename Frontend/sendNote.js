@@ -30,7 +30,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
         const { latitude, longitude } = data.locations[0].coords;
 
         try {
-            const response = await fetch('http://ton-backend-api.com/messages/nearby', {
+            const response = await fetch('192.168.2.16:3000/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ latitude, longitude }),
@@ -51,6 +51,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
 
 
 export default function SendNote({ navigation }) {
+
     const [fontsLoaded] = useFonts({
         DancingScript_400Regular,
         Poppins_400Regular,
@@ -66,6 +67,10 @@ export default function SendNote({ navigation }) {
 
 
     const envoyerMessage = async () => {
+        if (!message) {
+            alert("Ton message est vide !");
+            // navigation.navigate('SendNote');
+        }
         try {
             const location = await Location.getCurrentPositionAsync({});
             const messageData = {
@@ -77,7 +82,7 @@ export default function SendNote({ navigation }) {
                 encre,
             };
 
-            const response = await fetch('http://ton-backend-api.com/messages', {
+            const response = await fetch('http://192.168.2.16:3000/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(messageData),
