@@ -1,28 +1,27 @@
 const mongoose = require('mongoose');
 
-const newMessage = new Message({
-    content,
-    latitude,
-    longitude,
-    font,
-    paper,
-    encre,
+const messageSchema = mongoose.Schema({
+    content: { type: String, required: true }, // Contenu du message
+    latitude: { type: Number, required: true }, // Coordonnées géographiques
+    longitude: { type: Number, required: true }, // Coordonnées géographiques
+    font: String,
+    paper: String,
+    encre: String,
     location: {
-        type: 'Point',
-        coordinates: [longitude, latitude],
-    }
-});
+        type: { type: String, enum: ['Point'], required: true, default: 'Point' }, // Type de géométrie (Point)
+        coordinates: { type: [Number], required: true }
+    },
+})
 
-
-// Crée un index géospatial sur location pour les requêtes near
+// créer un index géospatial pour la localisation
 messageSchema.index({ location: '2dsphere' });
 
-// Avant de sauvegarder, remplir automatiquement location si latitude/longitude sont là
+// Avant de sauvegarder, on définit automatiquement les coordonnées de la localisation
 messageSchema.pre('save', function (next) {
     if (this.latitude && this.longitude) {
         this.location = {
             type: 'Point',
-            coordinates: [this.longitude, this.latitude],
+            coordinates: [this.longitude, this.latitude] // Ordre : [longitude, latitude]
         };
     }
     next();

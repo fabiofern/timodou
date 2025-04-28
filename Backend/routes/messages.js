@@ -23,7 +23,11 @@ router.post('/', async (req, res) => {
             longitude,
             font,
             paper,
-            encre
+            encre,
+            location: {
+                type: 'Point',
+                coordinates: [Number(longitude), Number(latitude)] // Ordre : [longitude, latitude]
+            }
         })
 
         const savedMessage = await newMessage.save();
@@ -35,76 +39,56 @@ router.post('/', async (req, res) => {
     }
 });
 
-// ROUTE QUI VERIFIE PAR SA GEO LOC VIA 2DSPHERE SI UN MESSAGE EST A MOINS DE 15 METRES DE L UTILISATEUR
+// Test de la route GET : http://localhost:3000/messages?latitude=48.8566&longitude=2.3522&distance=50
+// -- GET /messages : Récupérer les messages proches (via lat/lng en query) -- //
+
+
 router.post('/nearby', async (req, res) => {
     const { latitude, longitude } = req.body;
 
     if (!latitude || !longitude) {
-        return res.status(400).json({ result: false, message: 'Coordonnées manquantes' });
+        return res.status(400).json({ result: false, message: 'Latitude and longitude required' });
     }
 
     try {
-        const message = await Message.findOneAndDelete({
+        const nearbyMessages = await Message.find({
             location: {
                 $near: {
                     $geometry: {
                         type: 'Point',
-                        coordinates: [longitude, latitude],
+                        coordinates: [longitude, latitude], // ⚡ ordre important : [longitude, latitude]
                     },
-                    $maxDistance: 15, // mètres
+                    $maxDistance: 15, // en mètres
                 },
             },
         });
 
-        if (!message) {
-            return res.json({ result: true, data: null }); // rien à lire ici...
+        res.status(200).json({ result: true, data: nearbyMessages });
+    } catch (error) {
+        console.error('Erreur serveur nearby:', error);
+        res.status(500).json({ result: false, error: 'Erreur serveur' });
+    }
+});
+
+// Route pour supprimer un message par son ID
+router.delete('/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const deletedMessage = await Message.findByIdAndDelete(id);
+
+        if (!deletedMessage) {
+            return res.status(404).json({ result: false, message: 'Message non trouvé' });
         }
 
-        return res.json({ result: true, data: message }); // message lu, disparu du monde
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ result: false, error: 'Erreur serveur' });
-    }
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// -- GET /messages : Récupérer les messages proches (via lat/lng en query) -- //
-router.get('/', async (req, res) => {
-    const { latitude, longitude, radius = 0.01 } = req.query;
-
-    if (!latitude || !longitude) {
-        return res.status(400).json({ result: false, message: 'Latitude et longitude requises' })
-    }
-    try {
-        // Récupère les messages proches de l'utilisateur
-        const messages = await Message.find({
-            latitude: { $gte: Number(latitude) - radius, $lte: Number(latitude) + radius },
-            longitude: { $gte: Number(longitude) - radius, $lte: Number(longitude) + radius },
-        }).populate('author', 'username');
-
-        res.status(200).json({ result: true, message: 'Messages récupérés', data: messages });
+        res.status(200).json({ result: true, message: 'Message supprimé avec succès', data: deletedMessage });
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({ result: false, error: 'Erreur serveur' });
-
+        console.error('Erreur serveur suppression:', error);
+        res.status(500).json({ result: false, error: 'Erreur serveur' });
     }
 });
 
-// DELETE	/messages/:id	Supprimer un message (par son auteur uniquement)
-// GET    /messages/:id	Récupérer un message 
+
+
 
 module.exports = router;
