@@ -1,42 +1,33 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
-<<<<<<< HEAD
-const messageSchema = new mongoose.Schema({
-    content: { type: String, required: true },
-    font: String,
-    paper: String,
-    encre: String,
+const newMessage = new Message({
+    content,
+    latitude,
+    longitude,
+    font,
+    paper,
+    encre,
     location: {
-        type: {
-            type: String,
-            enum: ['Point'],
-            required: true,
-            default: 'Point',
-        },
-        coordinates: {
-            type: [Number],
-            required: true,
-        },
-    },
+        type: 'Point',
+        coordinates: [longitude, latitude],
+    }
 });
 
+
+// Crée un index géospatial sur location pour les requêtes near
 messageSchema.index({ location: '2dsphere' });
-=======
-const messageSchema = mongoose.Schema({
-    // author: { type: mongoose.Schema.Types.ObjectId, ref:'User', required: true  }, // Référence à un User
-    content : { type: String, required: true }, // Contenu du message
-    latitude : { type: Number, required: true }, // Coordonnées géographiques
-    longitude : { type: Number, required: true }, // Coordonnées géographiques
-    font : String,
-    paper : String,
-    encre : String,
-    // category : { type: String, required: true }, // Catégorie (poésie, encouragement, amour, etc.)
-    // createdAt : { type: Date, default: Date.now }, // Date de création
-    // expiresAt : { type: Date } // Date d'expiration (optionnelle)
-})
 
-// TTL (Time-to-live) activé pour suppression auto des messages dans MongoDB
-// messageSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); 
->>>>>>> 7fe8a8d83a91178b3ddbf82414c359abc1fa42d5
+// Avant de sauvegarder, remplir automatiquement location si latitude/longitude sont là
+messageSchema.pre('save', function (next) {
+    if (this.latitude && this.longitude) {
+        this.location = {
+            type: 'Point',
+            coordinates: [this.longitude, this.latitude],
+        };
+    }
+    next();
+});
 
-export default mongoose.model('Message', messageSchema);
+const Message = mongoose.model('Message', messageSchema);
+
+module.exports = Message;
