@@ -87,7 +87,7 @@ export default function Index({ navigation }) {
             if (!alreadyStarted) {
                 await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
                     accuracy: Location.Accuracy.Balanced,
-                    timeInterval: 15 * 60 * 1000, // 15 minutes
+                    timeInterval: 5 * 60 * 1000, // 15 minutes
                     distanceInterval: 0,
                     showsBackgroundLocationIndicator: false,
                     foregroundService: {

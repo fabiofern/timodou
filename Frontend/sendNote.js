@@ -17,6 +17,7 @@ import { Poppins_400Regular } from '@expo-google-fonts/poppins';
 import { GreatVibes_400Regular } from '@expo-google-fonts/great-vibes';
 import AppLoading from 'expo-app-loading';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from '@env';
 
 const LOCATION_TASK_NAME = 'background-location-task';
 
@@ -30,7 +31,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
         const { latitude, longitude } = data.locations[0].coords;
 
         try {
-            const response = await fetch('192.168.1.167:3000/', {
+            const response = await fetch(`${API_URL}/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ latitude, longitude }),
@@ -82,7 +83,7 @@ export default function SendNote({ navigation }) {
                 encre,
             };
 
-            const response = await fetch('http://192.168.1.167:3000/messages', {
+            const response = await fetch(`${API_URL}/messages`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(messageData),

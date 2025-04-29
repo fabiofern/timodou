@@ -8,6 +8,7 @@ import { GreatVibes_400Regular } from '@expo-google-fonts/great-vibes';
 import AppLoading from 'expo-app-loading';
 // import { set } from 'mongoose';
 import * as Location from 'expo-location';
+import { API_URL } from '@env';
 
 
 export default function NoteBox({ navigation }) {
@@ -22,10 +23,17 @@ export default function NoteBox({ navigation }) {
 
 
     useEffect(() => {
-        const fetchAndStoreNearbyNotes = async () => {
+        const loadNotes = async () => {
             try {
+                // 1. Chargement rapide via stockage local
+                const storedNotes = await AsyncStorage.getItem('stored_notes');
+                if (storedNotes) {
+                    setNotes(JSON.parse(storedNotes));
+                }
+
+                // 2. Mise à jour immédiate en live
                 const location = await Location.getCurrentPositionAsync({});
-                const response = await fetch('http://192.168.1.167:3000/messages/nearby', {
+                const response = await fetch(`${API_URL}/messages/nearby`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -37,19 +45,17 @@ export default function NoteBox({ navigation }) {
                 const result = await response.json();
 
                 if (result.result) {
-                    console.log('📬 Nearby notes found:', result.data);
-                    setNotes(result.data);
-                    await AsyncStorage.setItem('stored_notes', JSON.stringify(result.data)); // On sauvegarde ce qu'on trouve
-                } else {
-                    console.error('Erreur lors de la récupération des messages :', result.message || result.error);
+                    setNotes(result.data); // on écrase l'ancien affichage
+                    await AsyncStorage.setItem('stored_notes', JSON.stringify(result.data));
                 }
             } catch (error) {
-                console.error('Erreur:', error);
+                console.error('Erreur chargement des notes:', error);
             }
         };
 
-        fetchAndStoreNearbyNotes();
+        loadNotes();
     }, []);
+
 
 
     // const removeNote = async (index) => {
@@ -59,25 +65,37 @@ export default function NoteBox({ navigation }) {
     //     await AsyncStorage.setItem('stored_notes', JSON.stringify(updated));
     // };
 
+    // const removeNote = async (id) => {
+    //     try {
+    //         const response = await fetch(`http://192.168.1.167:3000/messages/${id}`, {
+    //             method: 'DELETE',
+    //         });
+
+    //         const result = await response.json();
+
+    //         if (result.result) {
+    //             // Mise à jour locale
+    //             setNotes((prevNotes) => prevNotes.filter((note) => note._id !== id));
+    //             await AsyncStorage.setItem('stored_notes', JSON.stringify(notes.filter((note) => note._id !== id)));
+    //         } else {
+    //             console.error('Erreur suppression :', result.message || result.error);
+    //         }
+    //     } catch (error) {
+    //         console.error('Erreur réseau suppression:', error);
+    //     }
+    // };
+
+
     const removeNote = async (id) => {
         try {
-            const response = await fetch(`http://192.168.1.167:3000/messages/${id}`, {
-                method: 'DELETE',
-            });
-
-            const result = await response.json();
-
-            if (result.result) {
-                // Mise à jour locale
-                setNotes((prevNotes) => prevNotes.filter((note) => note._id !== id));
-                await AsyncStorage.setItem('stored_notes', JSON.stringify(notes.filter((note) => note._id !== id)));
-            } else {
-                console.error('Erreur suppression :', result.message || result.error);
-            }
+            const newNotes = notes.filter((note) => note._id !== id);
+            setNotes(newNotes);
+            await AsyncStorage.setItem('stored_notes', JSON.stringify(newNotes));
         } catch (error) {
-            console.error('Erreur réseau suppression:', error);
+            console.error('Erreur lors de la suppression locale:', error);
         }
     };
+
 
 
     return (
