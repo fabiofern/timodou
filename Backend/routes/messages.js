@@ -12,6 +12,9 @@ router.post('/', async (req, res) => {
         return res.status(400).json({ result: false, message: 'Champs manquants ou vides' });
     }
     try {
+        // calcul de l'expiration du message
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // Définit l'expiration à 30 jours après la création
+       
         // Crée un nouveau message
         // const expiresAt = new Date();
         // expiresAt.setHours(expiresAt.getHours() + 24); // Définit l'expiration à 24 heures après la création
@@ -27,10 +30,12 @@ router.post('/', async (req, res) => {
             location: {
                 type: 'Point',
                 coordinates: [Number(longitude), Number(latitude)] // Ordre : [longitude, latitude]
-            }
+            },
+            expiresAt,
         })
 
         const savedMessage = await newMessage.save();
+        
         return res.status(201).json({ result: true, message: 'Message créé', data: savedMessage });
 
     } catch (error) {
@@ -70,23 +75,24 @@ router.post('/nearby', async (req, res) => {
     }
 });
 
-// Route pour supprimer un message par son ID
-router.delete('/:id', async (req, res) => {
-    const { id } = req.params;
+// // Route pour supprimer un message par son ID
+//Suppression du message en front sans toucher à la DBB
+// router.delete('/:id', async (req, res) => {
+//     const { id } = req.params;
 
-    try {
-        const deletedMessage = await Message.findByIdAndDelete(id);
+//     try {
+//         const deletedMessage = await Message.findByIdAndDelete(id);
 
-        if (!deletedMessage) {
-            return res.status(404).json({ result: false, message: 'Message non trouvé' });
-        }
+//         if (!deletedMessage) {
+//             return res.status(404).json({ result: false, message: 'Message non trouvé' });
+//         }
 
-        res.status(200).json({ result: true, message: 'Message supprimé avec succès', data: deletedMessage });
-    } catch (error) {
-        console.error('Erreur serveur suppression:', error);
-        res.status(500).json({ result: false, error: 'Erreur serveur' });
-    }
-});
+//         res.status(200).json({ result: true, message: 'Message supprimé avec succès', data: deletedMessage });
+//     } catch (error) {
+//         console.error('Erreur serveur suppression:', error);
+//         res.status(500).json({ result: false, error: 'Erreur serveur' });
+//     }
+// });
 
 
 

@@ -30,7 +30,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
         const { latitude, longitude } = data.locations[0].coords;
 
         try {
-            const response = await fetch('192.168.2.16:3000/', {
+            const response = await fetch('192.168.1.167:3000/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ latitude, longitude }),
@@ -82,7 +82,7 @@ export default function SendNote({ navigation }) {
                 encre,
             };
 
-            const response = await fetch('http://192.168.2.16:3000/messages', {
+            const response = await fetch('http://192.168.1.167:3000/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(messageData),

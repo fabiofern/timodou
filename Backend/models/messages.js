@@ -11,7 +11,11 @@ const messageSchema = mongoose.Schema({
         type: { type: String, enum: ['Point'], required: true, default: 'Point' }, // Type de géométrie (Point)
         coordinates: { type: [Number], required: true }
     },
-})
+    expiresAt: { type: Date, required: true } // pour la suppression automatique
+    })
+
+// Index TTL activé
+messageSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 // créer un index géospatial pour la localisation
 messageSchema.index({ location: '2dsphere' });
@@ -28,5 +32,4 @@ messageSchema.pre('save', function (next) {
 });
 
 const Message = mongoose.model('Message', messageSchema);
-
 module.exports = Message;

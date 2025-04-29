@@ -25,7 +25,7 @@ export default function NoteBox({ navigation }) {
         const fetchAndStoreNearbyNotes = async () => {
             try {
                 const location = await Location.getCurrentPositionAsync({});
-                const response = await fetch('http://192.168.2.16:3000/messages/nearby', {
+                const response = await fetch('http://192.168.1.167:3000/messages/nearby', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -61,7 +61,7 @@ export default function NoteBox({ navigation }) {
 
     const removeNote = async (id) => {
         try {
-            const response = await fetch(`http://192.168.2.16:3000/messages/${id}`, {
+            const response = await fetch(`http://192.168.1.167:3000/messages/${id}`, {
                 method: 'DELETE',
             });
 
